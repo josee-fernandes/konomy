@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate, Outlet, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, Navigate, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
@@ -15,6 +15,10 @@ function AppLayout() {
 		return <Navigate to="/sign-in" />
 	}
 
+	const { location } = useRouterState()
+
+	console.log(location.pathname)
+
 	function handleSignOut() {
 		clearMemoryUser()
 		navigate({ to: '/sign-in' })
@@ -22,12 +26,25 @@ function AppLayout() {
 
 	return (
 		<div>
-			<nav>
-				<Button variant="destructive" onClick={handleSignOut}>
-					Sign Out
-				</Button>
+			<nav className="px-10 py-6 flex justify-between items-center">
+				<Link to="/dashboard">
+					<h1 className="text-xl font-bold">KONOMY</h1>
+				</Link>
+				<div className="flex items-center gap-2">
+					<Button asChild variant={location.pathname === '/dashboard' ? 'default' : 'ghost'}>
+						<Link to="/dashboard">Dashboard</Link>
+					</Button>
+					<Button asChild variant={location.pathname === '/transactions' ? 'default' : 'ghost'}>
+						<Link to="/transactions">Transactions</Link>
+					</Button>
+					<Button variant="destructive" onClick={handleSignOut}>
+						Sign Out
+					</Button>
+				</div>
 			</nav>
-			<Outlet />
+			<div className="max-w-[1200px] mx-auto p-10">
+				<Outlet />
+			</div>
 		</div>
 	)
 }
