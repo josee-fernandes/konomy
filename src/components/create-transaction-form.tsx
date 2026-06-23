@@ -30,7 +30,7 @@ const createTransactionFormSchema = z.object({
 	subcategory: z.string().min(1, 'Subcategoria é obrigatória'),
 	origin: z.object({
 		id: z.string().min(1, 'ID da origem é obrigatório'),
-		type: z.enum(['credit-card', 'pix']),
+		type: z.enum(['credit-card', 'pix', 'bank-slip']),
 		name: z.string().min(1, 'Nome da origem é obrigatório'),
 	}),
 })
@@ -229,6 +229,7 @@ export function CreateTransactionForm() {
 												<SelectGroup>
 													<SelectItem value="credit-card">Cartão de crédito</SelectItem>
 													<SelectItem value="pix">PIX</SelectItem>
+													<SelectItem value="bank-slip">Boleto</SelectItem>
 												</SelectGroup>
 											</SelectContent>
 										</Select>

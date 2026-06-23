@@ -17,15 +17,15 @@ export const Route = createFileRoute('/_auth/sign-in')({
 	component: SignInPage,
 	head: () => ({
 		meta: [
-			{ title: 'Konomy | Sign in' },
-			{ name: 'description', content: 'Sign in to Konomy to manage your finances' },
+			{ title: 'Konomy | Entrar' },
+			{ name: 'description', content: 'Entre na sua conta Konomy para gerenciar suas finanças' },
 		],
 	}),
 })
 
 const signInFormSchema = z.object({
 	email: z.email('Invalid email address'),
-	password: z.string().min(8, 'Password must be at least 8 characters long'),
+	password: z.string().min(8, 'A senha deve ter pelo menos 8 caracteres'),
 })
 
 type TSignInFormSchema = z.infer<typeof signInFormSchema>
@@ -53,7 +53,7 @@ function SignInPage() {
 			navigate({ to: '/dashboard' })
 		} catch (error) {
 			setValue('password', '')
-			toast.error('Invalid credentials')
+			toast.error('Credenciais inválidas')
 		}
 	}
 
@@ -64,8 +64,8 @@ function SignInPage() {
 	return (
 		<div className="max-w-[1200px] mx-auto p-10">
 			<header className="text-center">
-				<h1 className="text-2xl font-bold">Sign In</h1>
-				<p className="text-sm text-muted-foreground">Sign in to Konomy</p>
+				<h1 className="text-2xl font-bold">Entrar</h1>
+				<p className="text-sm text-muted-foreground">Entre na sua conta Konomy</p>
 			</header>
 			<form className="my-10 flex flex-col gap-8 max-w-96 mx-auto" onSubmit={handleSubmit(onSubmit)}>
 				<FieldGroup>
@@ -74,7 +74,7 @@ function SignInPage() {
 						control={control}
 						render={({ field, fieldState }) => (
 							<Field data-invalid={fieldState.invalid}>
-								<FieldLabel htmlFor="email">Email</FieldLabel>
+								<FieldLabel htmlFor="email">E-mail</FieldLabel>
 								<Input
 									{...field}
 									id="email"
@@ -91,7 +91,7 @@ function SignInPage() {
 						control={control}
 						render={({ field, fieldState }) => (
 							<Field data-invalid={fieldState.invalid}>
-								<FieldLabel htmlFor="password">Password</FieldLabel>
+								<FieldLabel htmlFor="password">Senha</FieldLabel>
 								<InputGroup>
 									<InputGroupInput
 										{...field}
@@ -111,18 +111,18 @@ function SignInPage() {
 					/>
 				</FieldGroup>
 				<Button type="submit" className="w-full" disabled={!formState.isValid}>
-					Sign In
+					Entrar
 				</Button>
 			</form>
 			<div className="text-center">
-				<p className="inline-block">Don't have an account?</p>
+				<p className="inline-block">Não tem uma conta?</p>
 				<Button type="button" variant="link" asChild className="text-base p-1">
-					<Link to="/sign-up">Click here to sign up</Link>
+					<Link to="/sign-up">Clique aqui para criar uma</Link>
 				</Button>
 			</div>
 			<div className="text-center">
 				<Button type="button" variant="link" asChild className="text-sm p-1 mx-auto block">
-					<Link to="/">Back to home</Link>
+					<Link to="/">Voltar para página inicial</Link>
 				</Button>
 			</div>
 		</div>

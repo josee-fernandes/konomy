@@ -1,11 +1,11 @@
+import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { BanknoteArrowDown, BanknoteArrowUp, CreditCard, DollarSign, QrCode } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { BanknoteArrowDown, BanknoteArrowUp, DollarSign, Loader2 } from 'lucide-react'
 
-import type { ITransaction } from '@/@types/transaction'
 import { getTransactions } from '@/api/get-transactions'
 import { CreateTransactionForm } from '@/components/create-transaction-form'
 import { InfoCard } from '@/components/info-card'
+import { TransactionCard } from '@/components/transaction-card'
 import { Button } from '@/components/ui/button'
 import { calculatePerDayExpense, formatCurrency } from '@/utils/currency'
 
@@ -19,26 +19,36 @@ export const Route = createFileRoute('/_app/dashboard')({
 	}),
 })
 
-const ETransactionOriginTypeIcon = {
-	'credit-card': <CreditCard className="size-4" />,
-	pix: <QrCode className="size-4" />,
-}
-
 function DashboardPage() {
-	const [transactions, setTransactions] = useState<ITransaction[]>([])
+	const { data: transactionsData, isLoading: isLoadingTransactions } = useQuery({
+		queryKey: ['transactions', 1],
+		queryFn: () => getTransactions({ page: 1, limit: 3 }),
+	})
 
-	const data = [
+	if (isLoadingTransactions) {
+		return (
+			<div className="flex items-center justify-center h-full">
+				<Loader2 className="size-4 animate-spin" />
+				<p>Carregando transações</p>
+			</div>
+		)
+	}
+
+	const { transactions } = transactionsData
+
+	const summary = [
 		{
 			id: crypto.randomUUID(),
 			category: 'your-balance',
 			title: 'Em conta',
 			icon: <DollarSign className="size-4" />,
-			value: transactions.reduce((acc, transaction) => {
-				if (transaction.type === 'income') {
-					return acc + transaction.value
-				}
-				return acc
-			}, 0),
+			value:
+				transactions?.reduce((acc, transaction) => {
+					if (transaction.type === 'income') {
+						return acc + transaction.value
+					}
+					return acc
+				}, 0) || 0,
 		},
 		{
 			id: crypto.randomUUID(),
@@ -52,34 +62,26 @@ function DashboardPage() {
 			category: 'current-expenses',
 			title: 'Gastos atuais',
 			icon: <BanknoteArrowDown className="size-4" />,
-			value: transactions.reduce((acc, transaction) => {
-				if (transaction.type === 'expense') {
-					return acc + transaction.value
-				}
-				return acc
-			}, 0),
+			value:
+				transactions?.reduce((acc, transaction) => {
+					if (transaction.type === 'expense') {
+						return acc + transaction.value
+					}
+					return acc
+				}, 0) || 0,
 		},
 	]
 
 	const { perDaySoFar, projectedTotal } = calculatePerDayExpense(
-		data.find((item) => item.category === 'current-expenses')?.value,
+		summary.find((item) => item.category === 'current-expenses')?.value,
 	)
 
-	async function loadTransactions() {
-		const _transactions = await getTransactions()
-		setTransactions(_transactions)
-	}
-
-	useEffect(() => {
-		loadTransactions()
-	}, [])
-
 	return (
-		<div className="">
+		<div>
 			<section className="">
 				<h2 className="text-2xl font-bold">Resumo</h2>
 				<div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-					{data.map((item) => (
+					{summary.map((item) => (
 						<InfoCard key={item.title} title={item.title} icon={item.icon} highlight={formatCurrency(item.value)} />
 					))}
 				</div>
@@ -101,36 +103,17 @@ function DashboardPage() {
 						</div>
 					)}
 					{transactions.map((transaction) => (
-						<div key={transaction.id} className="bg-card p-4 rounded-lg border">
-							<p>{transaction.description}</p>
-							<p>{formatCurrency(transaction.value)}</p>
-							<p>{Intl.DateTimeFormat('pt-BR').format(new Date(transaction.date))}</p>
-							<div className="flex items-center gap-2">
-								<div className="flex items-center gap-2">
-									{ETransactionOriginTypeIcon[transaction.origin.type]}
-									<p>{transaction.origin.name}</p>
-								</div>
-							</div>
-							{transaction.installments && (
-								<div className="flex items-center gap-2">
-									<div className="flex items-center gap-2">
-										<p>Parcela</p>
-										<p>{transaction.installments.current}</p>
-										<p>/</p>
-										<p>{transaction.installments.total}</p>
-									</div>
-								</div>
-							)}
-						</div>
+						<TransactionCard key={transaction.id} transaction={transaction} />
 					))}
 				</div>
 			</section>
 			<section className="mt-8">
 				<h2 className="text-2xl font-bold">Insights</h2>
 				<p className="mt-4">
-					Hoje é {Intl.DateTimeFormat('pt-BR').format(new Date())}. Você gastou aproximadamente{' '}
-					{formatCurrency(perDaySoFar)} por dia, projetando {formatCurrency(projectedTotal)} total para o mês se você
-					continuar gastando da mesma forma.
+					Hoje é dia {Intl.DateTimeFormat('pt-BR', { day: 'numeric' }).format(new Date())} e você gastou aproximadamente{' '}
+					{formatCurrency(perDaySoFar)} por dia esse mês (
+					{Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date())}
+					), projetando {formatCurrency(projectedTotal)} total para o mês se você continuar gastando da mesma forma.
 				</p>
 				<div className="mt-4"></div>
 			</section>

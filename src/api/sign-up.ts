@@ -13,7 +13,7 @@ interface ISignUpParams {
 export async function signUp(data: ISignUpParams) {
 	const db = new LSDB()
 
-	const users = db.select({ from: 'users', scope: 'all' })
+	const users = db.select({ from: 'users' })
 
 	if (users.some((user: IUser) => user.email === data.email)) {
 		throw new Error('Email already in use')
@@ -25,8 +25,6 @@ export async function signUp(data: ISignUpParams) {
 			name: data.name,
 			email: data.email,
 			password: await hash(data.password, 10),
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
 		},
 	})
 

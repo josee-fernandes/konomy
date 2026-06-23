@@ -3,7 +3,6 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { signUp } from '@/api/sign-up'
@@ -17,22 +16,22 @@ export const Route = createFileRoute('/_auth/sign-up')({
 	component: SignUpPage,
 	head: () => ({
 		meta: [
-			{ title: 'Konomy | Sign up' },
-			{ name: 'description', content: 'Sign up to Konomy to manage your finances' },
+			{ title: 'Konomy | Criar conta' },
+			{ name: 'description', content: 'Crie uma conta Konomy para gerenciar suas finanças' },
 		],
 	}),
 })
 
 const signUpFormSchema = z
 	.object({
-		name: z.string().min(1, 'Name is required'),
-		email: z.email('Invalid email address'),
-		password: z.string().min(8, 'Password must be at least 8 characters long'),
-		passwordConfirmation: z.string().min(8, 'Password confirmation must be at least 8 characters long'),
+		name: z.string().min(1, 'Nome é obrigatório'),
+		email: z.email('E-mail inválido'),
+		password: z.string().min(8, 'A senha deve ter pelo menos 8 caracteres'),
+		passwordConfirmation: z.string().min(8, 'A confirmação de senha deve ter pelo menos 8 caracteres'),
 	})
 	.refine((data) => data.password === data.passwordConfirmation, {
 		path: ['passwordConfirmation'],
-		message: 'Passwords do not match',
+		message: 'As senhas não coincidem',
 	})
 
 type TSignUpFormSchema = z.infer<typeof signUpFormSchema>
@@ -58,7 +57,6 @@ function SignUpPage() {
 	async function onSubmit(data: TSignUpFormSchema) {
 		const user = await signUp(data)
 
-		toast.success('User created successfully')
 		setMemoryUser(user)
 		navigate({ to: '/dashboard' })
 	}
@@ -74,8 +72,8 @@ function SignUpPage() {
 	return (
 		<div className="max-w-[1200px] mx-auto p-10">
 			<header className="text-center">
-				<h1 className="text-2xl font-bold">Sign Up</h1>
-				<p className="text-sm text-muted-foreground">Sign up to Konomy</p>
+				<h1 className="text-2xl font-bold">Criar conta</h1>
+				<p className="text-sm text-muted-foreground">Crie uma conta Konomy para gerenciar suas finanças</p>
 			</header>
 			<form className="my-10 flex flex-col gap-8 max-w-96 mx-auto" onSubmit={handleSubmit(onSubmit)}>
 				<FieldGroup>
@@ -84,7 +82,7 @@ function SignUpPage() {
 						control={control}
 						render={({ field, fieldState }) => (
 							<Field data-invalid={fieldState.invalid}>
-								<FieldLabel htmlFor="name">Name</FieldLabel>
+								<FieldLabel htmlFor="name">Nome</FieldLabel>
 								<Input
 									{...field}
 									id="name"
@@ -118,7 +116,7 @@ function SignUpPage() {
 						control={control}
 						render={({ field, fieldState }) => (
 							<Field data-invalid={fieldState.invalid}>
-								<FieldLabel htmlFor="password">Password</FieldLabel>
+								<FieldLabel htmlFor="password">Senha</FieldLabel>
 								<InputGroup>
 									<InputGroupInput
 										{...field}
@@ -141,7 +139,7 @@ function SignUpPage() {
 						control={control}
 						render={({ field, fieldState }) => (
 							<Field data-invalid={fieldState.invalid}>
-								<FieldLabel htmlFor="passwordConfirmation">Password Confirmation</FieldLabel>
+								<FieldLabel htmlFor="passwordConfirmation">Confirmação de senha</FieldLabel>
 								<InputGroup>
 									<InputGroupInput
 										{...field}
@@ -161,18 +159,18 @@ function SignUpPage() {
 					/>
 				</FieldGroup>
 				<Button type="submit" className="w-full" disabled={!formState.isValid}>
-					Sign Up
+					Criar conta
 				</Button>
 			</form>
 			<div className="text-center">
-				<p className="inline-block">Already have an account?</p>
+				<p className="inline-block">Já tem uma conta?</p>
 				<Button type="button" variant="link" asChild className="text-base p-1">
-					<Link to="/sign-in">Click here to sign in</Link>
+					<Link to="/sign-in">Clique aqui para entrar</Link>
 				</Button>
 			</div>
 			<div className="text-center">
 				<Button type="button" variant="link" asChild className="text-sm p-1 mx-auto block">
-					<Link to="/">Back to home</Link>
+					<Link to="/">Voltar para página inicial</Link>
 				</Button>
 			</div>
 		</div>

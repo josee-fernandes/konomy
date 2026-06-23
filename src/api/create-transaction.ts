@@ -1,7 +1,7 @@
 import type { ITransaction } from '@/@types/transaction'
 import { LSDB } from '@/utils/db'
 
-interface ICreateTransactionParams extends Omit<ITransaction, 'id'> {}
+interface ICreateTransactionParams extends Omit<ITransaction, 'id' | 'createdAt' | 'updatedAt'> {}
 
 export async function createTransaction(data: ICreateTransactionParams) {
 	const db = new LSDB()

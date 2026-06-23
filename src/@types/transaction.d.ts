@@ -8,7 +8,7 @@ export interface ITransaction {
 	subcategory: string
 	origin: {
 		id: string
-		type: string
+		type: 'credit-card' | 'pix' | 'bank-slip'
 		name: string
 	}
 	installments?: {

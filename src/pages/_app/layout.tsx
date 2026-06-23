@@ -22,8 +22,8 @@ function AppLayout() {
 	}
 
 	return (
-		<div>
-			<nav className="px-10 py-6 flex justify-between items-center">
+		<div className="h-screen flex flex-col">
+			<nav className="px-10 py-6 flex justify-between items-center border-b">
 				<Link to="/dashboard">
 					<h1 className="text-xl font-bold">KONOMY</h1>
 				</Link>
@@ -32,15 +32,17 @@ function AppLayout() {
 						<Link to="/dashboard">Dashboard</Link>
 					</Button>
 					<Button asChild variant={location.pathname === '/transactions' ? 'default' : 'ghost'}>
-						<Link to="/transactions">Transactions</Link>
+						<Link to="/transactions">Transações</Link>
 					</Button>
 					<Button variant="destructive" onClick={handleSignOut}>
-						Sign Out
+						Sair
 					</Button>
 				</div>
 			</nav>
-			<div className="max-w-[1200px] mx-auto p-10">
-				<Outlet />
+			<div className="flex-1 h-full p-10 overflow-y-auto">
+				<div className="max-w-[1200px] mx-auto">
+					<Outlet />
+				</div>
 			</div>
 		</div>
 	)
