@@ -16,7 +16,11 @@ export async function getTransactions({ page = 1, limit = 10 }: IGetTransactions
 		offset: (page - 1) * limit,
 	}
 
-	const paginatedTransactions = db.select({ from: 'transactions', pagination })
+	const paginatedTransactions = db.select({
+		from: 'transactions',
+		orderBy: { field: 'date', direction: 'desc' },
+		pagination,
+	})
 
 	const data = {
 		transactions: paginatedTransactions as ITransaction[],

@@ -1,3 +1,5 @@
+import { ArrowDown, ArrowUp } from 'lucide-react'
+
 import type { ITransaction } from '@/@types/transaction'
 import { ETransactionOriginType } from '@/constants/transaction'
 import { formatCurrency } from '@/utils/currency'
@@ -13,12 +15,19 @@ export function TransactionCard({ transaction }: ITransactionCardProps) {
 	return (
 		<div key={transaction.id} className="group bg-card p-4 rounded-lg border">
 			<div className="flex items-center justify-between">
-				<p className="text-lg font-bold">
-					{transaction.description}
-					<span className="ml-2 text-sm text-muted-foreground">
-						{Intl.DateTimeFormat('pt-BR').format(new Date(transaction.date))}
-					</span>
-				</p>
+				<div className="flex items-center gap-2">
+					{transaction.type === 'expense' ? (
+						<ArrowDown className="size-4 text-rose-500" />
+					) : (
+						<ArrowUp className="size-4 text-emerald-500" />
+					)}
+					<p className="text-lg font-bold">
+						{transaction.description}
+						<span className="ml-2 text-sm text-muted-foreground">
+							{Intl.DateTimeFormat('pt-BR').format(new Date(transaction.date))}
+						</span>
+					</p>
+				</div>
 				<div className="flex items-center gap-2">
 					<UpdateTransactionForm transaction={transaction} />
 					<DeleteTransactionConfirmation transaction={transaction} />

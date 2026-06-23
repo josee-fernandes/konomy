@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { BanknoteArrowDown, BanknoteArrowUp, DollarSign, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
+import { getSummary } from '@/api/get-summary'
 import { getTransactions } from '@/api/get-transactions'
 import { CreateTransactionForm } from '@/components/create-transaction-form'
 import { InfoCard } from '@/components/info-card'
@@ -21,59 +22,28 @@ export const Route = createFileRoute('/_app/dashboard')({
 
 function DashboardPage() {
 	const { data: transactionsData, isLoading: isLoadingTransactions } = useQuery({
-		queryKey: ['transactions', 1],
-		queryFn: () => getTransactions({ page: 1, limit: 3 }),
+		queryKey: ['transactions', { page: 1, limit: 4 }],
+		queryFn: () => getTransactions({ page: 1, limit: 4 }),
 	})
 
-	if (isLoadingTransactions) {
+	const { data: summary, isLoading: isLoadingSummary } = useQuery({
+		queryKey: ['summary'],
+		queryFn: () => getSummary(),
+	})
+
+	if (isLoadingTransactions || isLoadingSummary) {
 		return (
 			<div className="flex items-center justify-center h-full">
 				<Loader2 className="size-4 animate-spin" />
-				<p>Carregando transações</p>
+				<p>Carregando dados</p>
 			</div>
 		)
 	}
 
-	const { transactions } = transactionsData
-
-	const summary = [
-		{
-			id: crypto.randomUUID(),
-			category: 'your-balance',
-			title: 'Em conta',
-			icon: <DollarSign className="size-4" />,
-			value:
-				transactions?.reduce((acc, transaction) => {
-					if (transaction.type === 'income') {
-						return acc + transaction.value
-					}
-					return acc
-				}, 0) || 0,
-		},
-		{
-			id: crypto.randomUUID(),
-			category: 'expected-income',
-			title: 'Entrada esperada',
-			icon: <BanknoteArrowUp className="size-4" />,
-			value: 5000.0,
-		},
-		{
-			id: crypto.randomUUID(),
-			category: 'current-expenses',
-			title: 'Gastos atuais',
-			icon: <BanknoteArrowDown className="size-4" />,
-			value:
-				transactions?.reduce((acc, transaction) => {
-					if (transaction.type === 'expense') {
-						return acc + transaction.value
-					}
-					return acc
-				}, 0) || 0,
-		},
-	]
+	const { transactions } = transactionsData!
 
 	const { perDaySoFar, projectedTotal } = calculatePerDayExpense(
-		summary.find((item) => item.category === 'current-expenses')?.value,
+		summary!.find((item) => item.category === 'current-expenses')?.value || 0,
 	)
 
 	return (
@@ -81,7 +51,7 @@ function DashboardPage() {
 			<section className="">
 				<h2 className="text-2xl font-bold">Resumo</h2>
 				<div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-					{summary.map((item) => (
+					{summary?.map((item) => (
 						<InfoCard key={item.title} title={item.title} icon={item.icon} highlight={formatCurrency(item.value)} />
 					))}
 				</div>
@@ -96,7 +66,7 @@ function DashboardPage() {
 						<CreateTransactionForm />
 					</div>
 				</div>
-				<div className="mt-4 flex flex-col gap-4">
+				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 					{transactions.length === 0 && (
 						<div className="bg-card p-4 rounded-lg border">
 							<p>Você ainda não tem nenhum lançamento</p>
