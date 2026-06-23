@@ -16,8 +16,6 @@ function AppLayout() {
 		return <Navigate to="/sign-in" />
 	}
 
-	console.log(location.pathname)
-
 	function handleSignOut() {
 		clearMemoryUser()
 		navigate({ to: '/sign-in' })

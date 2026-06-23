@@ -31,6 +31,7 @@
     "lucide-react": "^1.20.0",
     "radix-ui": "^1.6.0",
     "react": "^19.2.6",
+    "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.6",
     "react-hook-form": "^7.79.0",
     "shadcn": "^4.11.0",

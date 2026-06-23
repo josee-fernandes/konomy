@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { BanknoteArrowDown, BanknoteArrowUp, CreditCard, DollarSign, QrCode } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
+import type { ITransaction } from '@/@types/transaction'
+import { getTransactions } from '@/api/get-transactions'
+import { CreateTransactionForm } from '@/components/create-transaction-form'
 import { InfoCard } from '@/components/info-card'
 import { Button } from '@/components/ui/button'
 import { calculatePerDayExpense, formatCurrency } from '@/utils/currency'
@@ -15,14 +19,26 @@ export const Route = createFileRoute('/_app/dashboard')({
 	}),
 })
 
+const ETransactionOriginTypeIcon = {
+	'credit-card': <CreditCard className="size-4" />,
+	pix: <QrCode className="size-4" />,
+}
+
 function DashboardPage() {
+	const [transactions, setTransactions] = useState<ITransaction[]>([])
+
 	const data = [
 		{
 			id: crypto.randomUUID(),
 			category: 'your-balance',
 			title: 'Em conta',
 			icon: <DollarSign className="size-4" />,
-			value: 460.57,
+			value: transactions.reduce((acc, transaction) => {
+				if (transaction.type === 'income') {
+					return acc + transaction.value
+				}
+				return acc
+			}, 0),
 		},
 		{
 			id: crypto.randomUUID(),
@@ -36,48 +52,12 @@ function DashboardPage() {
 			category: 'current-expenses',
 			title: 'Gastos atuais',
 			icon: <BanknoteArrowDown className="size-4" />,
-			value: 3201.44,
-		},
-	]
-
-	const transtactions = [
-		{
-			id: crypto.randomUUID(),
-			description: 'Compra de roupas',
-			value: 100.0,
-			date: new Date('2026-06-23').toISOString(),
-			type: 'expense',
-			category: 'clothing',
-			subcategory: 'clothes',
-			paymentMethod: 'credit card',
-			installments: {
-				id: crypto.randomUUID(),
-				total: 1,
-				current: 1,
-				value: 100.0,
-			},
-			origin: {
-				id: crypto.randomUUID(),
-				type: 'credit-card',
-				name: 'Itaú',
-				logo: <CreditCard className="size-4 text-primary" />,
-			},
-		},
-		{
-			id: crypto.randomUUID(),
-			description: 'Dívida Layane',
-			value: 500.0,
-			date: new Date('2026-06-20').toISOString(),
-			type: 'expense',
-			category: 'other',
-			subcategory: 'other',
-			paymentMethod: 'pix',
-			origin: {
-				id: crypto.randomUUID(),
-				type: 'pix',
-				name: 'Pix',
-				logo: <QrCode className="size-4 text-primary" />,
-			},
+			value: transactions.reduce((acc, transaction) => {
+				if (transaction.type === 'expense') {
+					return acc + transaction.value
+				}
+				return acc
+			}, 0),
 		},
 	]
 
@@ -85,31 +65,49 @@ function DashboardPage() {
 		data.find((item) => item.category === 'current-expenses')?.value,
 	)
 
+	async function loadTransactions() {
+		const _transactions = await getTransactions()
+		setTransactions(_transactions)
+	}
+
+	useEffect(() => {
+		loadTransactions()
+	}, [])
+
 	return (
 		<div className="">
-			<section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-				{data.map((item) => (
-					<InfoCard key={item.title} title={item.title} icon={item.icon} highlight={formatCurrency(item.value)} />
-				))}
+			<section className="">
+				<h2 className="text-2xl font-bold">Resumo</h2>
+				<div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+					{data.map((item) => (
+						<InfoCard key={item.title} title={item.title} icon={item.icon} highlight={formatCurrency(item.value)} />
+					))}
+				</div>
 			</section>
 			<section className="mt-8">
 				<div className="flex items-center justify-between">
 					<h2 className="text-2xl font-bold">Últimos lançamentos</h2>
-					<div>
+					<div className="flex items-center gap-2">
 						<Button asChild variant="link">
 							<Link to="/transactions">Ver todos</Link>
 						</Button>
+						<CreateTransactionForm />
 					</div>
 				</div>
 				<div className="mt-4 flex flex-col gap-4">
-					{transtactions.map((transaction) => (
+					{transactions.length === 0 && (
+						<div className="bg-card p-4 rounded-lg border">
+							<p>Você ainda não tem nenhum lançamento</p>
+						</div>
+					)}
+					{transactions.map((transaction) => (
 						<div key={transaction.id} className="bg-card p-4 rounded-lg border">
 							<p>{transaction.description}</p>
 							<p>{formatCurrency(transaction.value)}</p>
 							<p>{Intl.DateTimeFormat('pt-BR').format(new Date(transaction.date))}</p>
 							<div className="flex items-center gap-2">
 								<div className="flex items-center gap-2">
-									{transaction.origin.logo}
+									{ETransactionOriginTypeIcon[transaction.origin.type]}
 									<p>{transaction.origin.name}</p>
 								</div>
 							</div>
