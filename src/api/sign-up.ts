@@ -1,6 +1,7 @@
 import { hash } from 'bcryptjs'
 
 import type { IUser } from '@/@types/auth'
+import { LSDB } from '@/utils/db'
 
 interface ISignUpParams {
 	name: string
@@ -10,24 +11,26 @@ interface ISignUpParams {
 }
 
 export async function signUp(data: ISignUpParams) {
-	const users = JSON.parse(localStorage.getItem('@konomy:users') ?? '[]')
+	const db = new LSDB()
+
+	const users = db.select({ from: 'users', scope: 'all' })
 
 	if (users.some((user: IUser) => user.email === data.email)) {
 		throw new Error('Email already in use')
 	}
 
-	const newUser = {
-		id: crypto.randomUUID(),
-		name: data.name,
-		email: data.email,
-		password: await hash(data.password, 10),
-		createdAt: new Date().toISOString(),
-		updatedAt: new Date().toISOString(),
-	}
+	const createdUser = db.insert({
+		into: 'users',
+		data: {
+			name: data.name,
+			email: data.email,
+			password: await hash(data.password, 10),
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+		},
+	})
 
-	const updatedUsers = [...users, newUser]
+	delete createdUser.password
 
-	localStorage.setItem('@konomy:users', JSON.stringify(updatedUsers))
-
-	return { ...newUser, token: crypto.randomUUID() }
+	return { ...createdUser, token: crypto.randomUUID() } as IUser
 }

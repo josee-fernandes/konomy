@@ -10,12 +10,11 @@ export const Route = createFileRoute('/_app')({
 function AppLayout() {
 	const navigate = useNavigate()
 	const { isAuthenticated, clearMemoryUser } = useAuthStore()
+	const { location } = useRouterState()
 
 	if (!isAuthenticated) {
 		return <Navigate to="/sign-in" />
 	}
-
-	const { location } = useRouterState()
 
 	console.log(location.pathname)
 

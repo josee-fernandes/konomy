@@ -125,7 +125,7 @@ function SignUpPage() {
 										id="password"
 										type={showPassword ? 'text' : 'password'}
 										aria-invalid={fieldState.invalid}
-										placeholder="********"
+										placeholder="••••••••"
 										autoComplete="off"
 									/>
 									<InputGroupButton onClick={handleToggleShowPassword}>
@@ -148,7 +148,7 @@ function SignUpPage() {
 										id="passwordConfirmation"
 										type={showPasswordConfirmation ? 'text' : 'password'}
 										aria-invalid={fieldState.invalid}
-										placeholder="********"
+										placeholder="••••••••"
 										autoComplete="off"
 									/>
 									<InputGroupButton onClick={handleToggleShowPasswordConfirmation}>

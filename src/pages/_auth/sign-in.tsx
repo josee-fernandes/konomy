@@ -97,7 +97,7 @@ function SignInPage() {
 										{...field}
 										id="password"
 										aria-invalid={fieldState.invalid}
-										placeholder="********"
+										placeholder="••••••••"
 										autoComplete="current-password"
 										type={showPassword ? 'text' : 'password'}
 									/>
