@@ -3,6 +3,7 @@ import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { BanknoteX, Loader2 } from 'lucide-react'
 import { z } from 'zod'
 
+import type { ITransaction } from '@/@types/transaction'
 import { getTransactions } from '@/api/transactions/get-transactions'
 import { Pagination } from '@/components/pagination'
 import { CreateTransactionForm } from '@/components/transactions/create-transaction-form'
@@ -62,12 +63,17 @@ function TransactionsPage() {
 					<CreateTransactionForm />
 				</div>
 			</div>
-			<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-				{transactions?.map((transaction) => (
-					<TransactionCard key={transaction.id} transaction={transaction} />
-				))}
+			<div className="flex-1">
+				{transactions.length > 0 && (
+					<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+						{transactions?.map((transaction) => (
+							<TransactionCard key={transaction.id} transaction={transaction as ITransaction} />
+						))}
+					</div>
+				)}
 				{transactions.length === 0 && (
-					<div className="col-span-full border rounded-lg h-auto flex flex-col items-center justify-center gap-2">
+					// <div className="h-full border rounded-lg flex flex-col items-center justify-center gap-2 bg-linear-210 from-card via-background via-30% to-card to-100%">
+					<div className="h-full border rounded-lg flex flex-col items-center justify-center gap-2 bg-linear-210 from-background via-card via-35% to-background to-90%">
 						<BanknoteX className="size-20 text-muted-foreground" />
 						<p className="text-center text-lg text-muted-foreground font-medium">Nenhuma transação encontrada</p>
 					</div>

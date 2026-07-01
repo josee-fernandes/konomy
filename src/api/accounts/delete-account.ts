@@ -1,7 +1,5 @@
-import { LSDB } from '@/utils/db'
+import { db } from '@/lib/lsdb'
 
 export async function deleteAccount(id: string) {
-	const db = new LSDB()
-
-	db.delete({ from: 'accounts', id })
+	await db.delete({ from: 'accounts', id })
 }

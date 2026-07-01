@@ -1,14 +1,10 @@
 import type { IAccount } from '@/@types/account'
-import { LSDB } from '@/utils/db'
+import { db } from '@/lib/lsdb'
 
 interface ICreateAccountParams extends Omit<IAccount, 'id' | 'createdAt' | 'updatedAt'> {}
 
 export async function createAccount(data: ICreateAccountParams) {
-	const db = new LSDB()
+	const account = await db.insert({ into: 'accounts', data })
 
-	console.log({ data })
-
-	const account = db.insert({ into: 'accounts', data })
-
-	return account as IAccount
+	return account
 }

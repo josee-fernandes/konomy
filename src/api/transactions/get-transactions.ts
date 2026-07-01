@@ -1,5 +1,4 @@
-import type { ITransaction } from '@/@types/transaction'
-import { LSDB } from '@/utils/db'
+import { db } from '@/lib/lsdb'
 
 interface IGetTransactionsParams {
 	page: number
@@ -7,23 +6,21 @@ interface IGetTransactionsParams {
 }
 
 export async function getTransactions({ page = 1, limit = 10 }: IGetTransactionsParams) {
-	const db = new LSDB()
-
-	const transactions = db.select({ from: 'transactions' })
+	const transactions = await db.select({ from: 'transactions' })
 
 	const pagination = {
 		limit,
 		offset: (page - 1) * limit,
 	}
 
-	const paginatedTransactions = db.select({
+	const paginatedTransactions = await db.select({
 		from: 'transactions',
 		orderBy: { field: 'date', direction: 'desc' },
 		pagination,
 	})
 
 	const data = {
-		transactions: paginatedTransactions as ITransaction[],
+		transactions: paginatedTransactions,
 		meta: {
 			total: transactions.length,
 			page: pagination.offset / pagination.limit + 1,

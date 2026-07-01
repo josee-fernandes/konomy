@@ -1,12 +1,10 @@
 import type { ITransaction } from '@/@types/transaction'
-import { LSDB } from '@/utils/db'
+import { db } from '@/lib/lsdb'
 
 interface ICreateTransactionParams extends Omit<ITransaction, 'id' | 'createdAt' | 'updatedAt'> {}
 
 export async function createTransaction(data: ICreateTransactionParams) {
-	const db = new LSDB()
+	const transaction = await db.insert({ into: 'transactions', data })
 
-	const transaction = db.insert({ into: 'transactions', data })
-
-	return transaction as ITransaction
+	return transaction
 }

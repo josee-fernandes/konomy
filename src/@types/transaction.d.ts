@@ -7,12 +7,10 @@ export interface ITransaction {
 	category: string
 	subcategory: string
 	origin: {
-		id: string
 		type: 'credit-card' | 'pix' | 'bank-slip'
 		name: string
 	}
-	installments?: {
-		id: string
+	installments: {
 		total: number
 		current: number
 		value: number

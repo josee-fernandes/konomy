@@ -1,12 +1,10 @@
 import type { IAccount } from '@/@types/account'
-import { LSDB } from '@/utils/db'
+import { db } from '@/lib/lsdb'
 
 interface IUpdateAccountParams extends Omit<IAccount, 'createdAt' | 'updatedAt'> {}
 
 export async function updateAccount(data: IUpdateAccountParams) {
-	const db = new LSDB()
+	const account = await db.update({ from: 'accounts', where: { id: data.id }, data })
 
-	const account = db.update({ from: 'accounts', where: { id: data.id }, data })
-
-	return account as IAccount
+	return account
 }

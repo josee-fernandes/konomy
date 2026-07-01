@@ -1,7 +1,6 @@
 import { hash } from 'bcryptjs'
 
-import type { IUser } from '@/@types/auth'
-import { LSDB } from '@/utils/db'
+import { db } from '@/lib/lsdb'
 
 interface ISignUpParams {
 	name: string
@@ -11,15 +10,13 @@ interface ISignUpParams {
 }
 
 export async function signUp(data: ISignUpParams) {
-	const db = new LSDB()
+	const users = await db.select({ from: 'users' })
 
-	const users = db.select({ from: 'users' })
-
-	if (users.some((user: IUser) => user.email === data.email)) {
+	if (users.some((user) => user.email === data.email)) {
 		throw new Error('Email already in use')
 	}
 
-	const createdUser = db.insert({
+	const createdUser = await db.insert({
 		into: 'users',
 		data: {
 			name: data.name,
@@ -28,7 +25,7 @@ export async function signUp(data: ISignUpParams) {
 		},
 	})
 
-	delete createdUser.password
+	const { password: _, ...userWithoutPassword } = createdUser
 
-	return { ...createdUser, token: crypto.randomUUID() } as IUser
+	return { ...userWithoutPassword, token: crypto.randomUUID() }
 }

@@ -1,4 +1,4 @@
-import { BanknoteArrowDown, BanknoteArrowUp, DollarSign, type LucideIcon } from 'lucide-react'
+import { BanknoteArrowDown, BanknoteArrowUp, DollarSign } from 'lucide-react'
 
 import type { ISummaryItem } from '@/api/get-summary'
 import { formatCurrency } from '@/utils/currency'
@@ -15,7 +15,7 @@ const SUMMARY_ITEM_ICON = {
 
 export function InfoCard({ item }: IInfoCardProps) {
 	return (
-		<div className="bg-card p-4 rounded-lg sm:max-w-96 flex flex-col gap-2 border">
+		<div className="bg-linear-210 from-background via-card via-35% to-background to-90% p-4 rounded-lg sm:max-w-96 flex flex-col gap-2 border">
 			<div className="flex items-center justify-between">
 				<h3>{item.title}</h3>
 				<div>{SUMMARY_ITEM_ICON[item.category]}</div>

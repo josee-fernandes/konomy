@@ -1,6 +1,4 @@
-import type { IAccount } from '@/@types/account'
-import type { ITransaction } from '@/@types/transaction'
-import { LSDB } from '@/utils/db'
+import { db } from '@/lib/lsdb'
 
 interface IGetSummaryParams {
 	userId: string
@@ -14,21 +12,19 @@ export interface ISummaryItem {
 }
 
 export async function getSummary({ userId }: IGetSummaryParams) {
-	const db = new LSDB()
-
-	const transactions = db.select({ from: 'transactions' })
-	const accounts = db.select({ from: 'accounts', where: { userId } })
+	const transactions = await db.select({ from: 'transactions' })
+	const accounts = await db.select({ from: 'accounts', where: { userId } })
 
 	return [
 		{
 			id: crypto.randomUUID(),
 			category: 'balance',
 			title: 'Saldo total',
-			value: accounts.reduce((acc: number, account: IAccount) => {
+			value: accounts.reduce((accumulator, account) => {
 				if (account.currency === 'BRL') {
-					return acc + account.balance
+					return accumulator + account.balance
 				}
-				return acc + 0 // TODO: different currencies
+				return accumulator + 0 // TODO: different currencies
 			}, 0),
 		},
 		{
@@ -42,11 +38,11 @@ export async function getSummary({ userId }: IGetSummaryParams) {
 			category: 'expenses',
 			title: 'Gastos atuais',
 			value:
-				transactions?.reduce((acc: number, transaction: ITransaction) => {
+				transactions?.reduce((accumulator, transaction) => {
 					if (transaction.type === 'expense') {
-						return acc + transaction.value
+						return accumulator + transaction.value
 					}
-					return acc
+					return accumulator
 				}, 0) || 0,
 		},
 	] as ISummaryItem[]

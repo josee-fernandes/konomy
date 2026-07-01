@@ -1,46 +1,110 @@
-type TTables = 'users' | 'transactions' | 'accounts'
+type TPrimitive = 'string' | 'number' | 'boolean' | 'date' | 'array'
 
-interface ISelectParams {
-	from: TTables
-	where?: Record<string, any>
+interface ISchemaObject {
+	[key: string]: TPrimitive
+}
+
+type TSchemaValue = TPrimitive | ISchemaObject
+
+type TPrimitiveMap = {
+	string: string
+	number: number
+	boolean: boolean
+	date: Date
+	array: any[]
+	object: object
+}
+
+type TInferTable<T extends Record<string, TSchemaValue>> = {
+	[K in keyof T]: T[K] extends keyof TPrimitiveMap
+		? TPrimitiveMap[T[K]]
+		: T[K] extends ISchemaObject
+			? TInferTable<T[K]>
+			: never
+}
+
+type TSchemaDefinition = Record<string, Record<string, TSchemaValue>>
+
+type TTableDefinition<TSchema extends TSchemaDefinition, TTable extends keyof TSchema> = TInferTable<TSchema[TTable]>
+
+type TPersistedTable<TSchema extends TSchemaDefinition, TTable extends keyof TSchema> = TTableDefinition<
+	TSchema,
+	TTable
+> & {
+	id: string
+	createdAt: string
+	updatedAt: string
+}
+
+interface ISelectParams<TSchema extends TSchemaDefinition, TTable extends keyof TSchema> {
+	from: TTable
+	where?: Partial<TPersistedTable<TSchema, TTable>>
 	id?: string
 	pagination?: {
 		limit?: number
 		offset: number
 	}
 	orderBy?: {
-		field: string
+		field: keyof TPersistedTable<TSchema, TTable>
 		direction: 'asc' | 'desc'
 	}
 }
 
-interface IInsertParams {
-	into: TTables
-	data: Record<string, any>
+type TInsertTable<TSchema extends TSchemaDefinition, TTable extends keyof TSchema> = TTableDefinition<TSchema, TTable>
+
+interface IInsertParams<TSchema extends TSchemaDefinition, TTable extends keyof TSchema> {
+	into: TTable
+	data: TInsertTable<TSchema, TTable>
 }
 
-interface IUpdateParams {
-	from: TTables
-	where: Record<string, any>
-	data: Record<string, any>
+type TUpdateTable<TSchema extends TSchemaDefinition, TTable extends keyof TSchema> = TTableDefinition<TSchema, TTable>
+
+interface IUpdateParams<TSchema extends TSchemaDefinition, TTable extends keyof TSchema> {
+	from: TTable
+	where: Partial<TPersistedTable<TSchema, TTable>>
+	data: Partial<TUpdateTable<TSchema, TTable>>
 }
 
-interface IDeleteParams {
-	from: TTables
+interface IDeleteParams<TSchema extends TSchemaDefinition, TTable extends keyof TSchema> {
+	from: TTable
 	id: string
 }
 
-export class LSDB {
-	private readonly prefix = '@konomy:'
+interface ILSDBParams<TSchema extends TSchemaDefinition> {
+	name: string
+	prefix?: string
+	schema: TSchema
+}
 
-	constructor() {}
+export class LSDB<TSchema extends TSchemaDefinition> {
+	private prefix: string
 
-	private getKey(table: TTables) {
-		return `${this.prefix}:${table}`
+	constructor({ name, prefix }: ILSDBParams<TSchema>) {
+		this.prefix = prefix ? `${prefix}:` : `@lsdb.${name}:`
 	}
 
-	select({ from, where, id, orderBy = { field: 'createdAt', direction: 'desc' }, pagination }: ISelectParams) {
-		const data = JSON.parse(localStorage.getItem(this.getKey(from)) || '[]')
+	private getKey(table: keyof TSchema) {
+		return `${this.prefix}:${String(table)}`
+	}
+
+	async select<TTable extends keyof TSchema>(
+		params: ISelectParams<TSchema, TTable> & {
+			id: string
+		},
+	): Promise<TPersistedTable<TSchema, TTable> | undefined>
+
+	async select<TTable extends keyof TSchema>(
+		params: ISelectParams<TSchema, TTable>,
+	): Promise<TPersistedTable<TSchema, TTable>[]>
+
+	async select<TTable extends keyof TSchema>({
+		from,
+		where,
+		id,
+		orderBy = { field: 'createdAt', direction: 'desc' },
+		pagination,
+	}: ISelectParams<TSchema, TTable>) {
+		const data = JSON.parse(localStorage.getItem(this.getKey(from)) || '[]') as TPersistedTable<TSchema, TTable>[]
 
 		let result = data
 
@@ -71,10 +135,13 @@ export class LSDB {
 		return result
 	}
 
-	insert({ into, data }: IInsertParams) {
+	async insert<TTable extends keyof TSchema>({
+		into,
+		data,
+	}: IInsertParams<TSchema, TTable>): Promise<TPersistedTable<TSchema, TTable>> {
 		const existingData = JSON.parse(localStorage.getItem(this.getKey(into)) || '[]')
 
-		const insertion = {
+		const insertion: TPersistedTable<TSchema, TTable> = {
 			id: crypto.randomUUID(),
 			...data,
 			createdAt: new Date().toISOString(),
@@ -85,13 +152,20 @@ export class LSDB {
 
 		localStorage.setItem(this.getKey(into), JSON.stringify(newData))
 
-		return insertion as Record<string, any>
+		return insertion
 	}
 
-	update({ from, where, data }: IUpdateParams) {
-		const existingData = JSON.parse(localStorage.getItem(this.getKey(from)) || '[]')
+	async update<TTable extends keyof TSchema>({
+		from,
+		where,
+		data,
+	}: IUpdateParams<TSchema, TTable>): Promise<TPersistedTable<TSchema, TTable>[]> {
+		const existingData = JSON.parse(localStorage.getItem(this.getKey(from)) || '[]') as TPersistedTable<
+			TSchema,
+			TTable
+		>[]
 
-		const updatedData = existingData.map((item: any) => {
+		const updatedData = existingData.map((item: TPersistedTable<TSchema, TTable>) => {
 			const match = Object.keys(where).every((k) => item[k] === where[k])
 
 			return match ? { ...item, ...data, updatedAt: new Date().toISOString() } : item
@@ -102,10 +176,13 @@ export class LSDB {
 		return updatedData
 	}
 
-	delete({ from, id }: IDeleteParams) {
-		const existingData = JSON.parse(localStorage.getItem(this.getKey(from)) || '[]')
+	async delete<TTable extends keyof TSchema>({ from, id }: IDeleteParams<TSchema, TTable>): Promise<void> {
+		const existingData = JSON.parse(localStorage.getItem(this.getKey(from)) || '[]') as TPersistedTable<
+			TSchema,
+			TTable
+		>[]
 
-		const filteredData = existingData.filter((item: any) => item.id !== id)
+		const filteredData = existingData.filter((item: TPersistedTable<TSchema, TTable>) => item.id !== id)
 
 		localStorage.setItem(this.getKey(from), JSON.stringify(filteredData))
 	}
