@@ -8,6 +8,7 @@ import { getAccounts } from '@/api/accounts/get-accounts'
 import { AccountCard } from '@/components/accounts/account-card'
 import { AccountCreateForm } from '@/components/accounts/create-account-form'
 import { Pagination } from '@/components/pagination'
+import { useAuthStore } from '@/stores/auth'
 
 const accountsSearchSchema = z.object({
 	page: z
@@ -33,11 +34,12 @@ export const Route = createFileRoute('/_app/accounts')({
 
 function AccountsPage() {
 	const { page = 1 } = Route.useSearch()
+	const { user } = useAuthStore()
 	const navigate = getRouteApi('/_app/accounts').useNavigate()
 
 	const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
 		queryKey: ['accounts', page],
-		queryFn: () => getAccounts({ page }),
+		queryFn: () => getAccounts({ userId: user!.id, page }),
 	})
 
 	if (isLoadingAccounts) {

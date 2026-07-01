@@ -15,5 +15,5 @@ export interface ITransaction {
 		current: number
 		value: number
 	}
-	// TODO: adicionar account id
+	accountId: string
 }

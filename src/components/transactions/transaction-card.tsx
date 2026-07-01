@@ -1,19 +1,27 @@
-import { ArrowDown, ArrowUp } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { ArrowDown, ArrowUp, Loader2 } from 'lucide-react'
 
+import type { TAccountCurrency } from '@/@types/account'
 import type { ITransaction } from '@/@types/transaction'
+import { getAccount } from '@/api/accounts/get-account'
+import { DeleteTransactionConfirmation } from '@/components/transactions/delete-transaction-confirmation'
+import { UpdateTransactionForm } from '@/components/transactions/update-transaction-form'
+import { Separator } from '@/components/ui/separator'
 import { ETransactionOriginType } from '@/constants/transaction'
 import { formatCurrency } from '@/utils/currency'
-
-import { DeleteTransactionConfirmation } from './delete-transaction-confirmation'
-import { UpdateTransactionForm } from './update-transaction-form'
 
 interface ITransactionCardProps {
 	transaction: ITransaction
 }
 
 export function TransactionCard({ transaction }: ITransactionCardProps) {
+	const { data: account, isLoading: isLoadingAccount } = useQuery({
+		queryKey: ['accounts', transaction.accountId],
+		queryFn: () => getAccount({ id: transaction.accountId }),
+	})
+
 	return (
-		<div key={transaction.id} className="group bg-card p-4 rounded-lg border">
+		<div className="group p-4 rounded-lg border relative shiny-bg">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					{transaction.type === 'expense' ? (
@@ -33,23 +41,35 @@ export function TransactionCard({ transaction }: ITransactionCardProps) {
 					<DeleteTransactionConfirmation transaction={transaction} />
 				</div>
 			</div>
-			<p>{formatCurrency(transaction.value)}</p>
-			<div className="flex items-center gap-2">
-				<div className="flex items-center gap-2">
-					{ETransactionOriginType[transaction.origin.type].icon}
-					{ETransactionOriginType[transaction.origin.type].name} - <p>{transaction.origin.name}</p>
+			{isLoadingAccount ? (
+				<div className="flex items-center justify-center">
+					<Loader2 className="size-4 animate-spin" />
 				</div>
-			</div>
-			{transaction.installments && (
-				<div className="flex items-center gap-2">
-					<div className="flex items-center gap-2">
-						<p>Parcela</p>
-						<p>{transaction.installments.current}</p>
-						<p>/</p>
-						<p>{transaction.installments.total}</p>
-					</div>
-				</div>
+			) : (
+				<>
+					<p className="text-2xl font-bold">
+						{formatCurrency(transaction.value, account?.currency as TAccountCurrency)}
+					</p>
+				</>
 			)}
+			<div className="mt-4 flex flex-col items-start sm:flex-row sm:items-center gap-2">
+				<p className="text-sm text-muted-foreground">
+					Conta: <span className="font-bold">{account?.name}</span>
+				</p>
+				<Separator orientation="vertical" className="hidden sm:block" />
+				<div className="flex items-center gap-2 text-muted-foreground">
+					<div className="">{ETransactionOriginType[transaction.origin.type].icon}</div>
+					<p className="text-sm">{ETransactionOriginType[transaction.origin.type].name}</p>
+				</div>
+				<Separator orientation="vertical" className="hidden sm:block" />
+				{transaction.installments && (
+					<div className="flex items-center gap-2">
+						<p className="text-sm text-muted-foreground">
+							Parcela {transaction.installments.current} de {transaction.installments.total}
+						</p>
+					</div>
+				)}
+			</div>
 		</div>
 	)
 }

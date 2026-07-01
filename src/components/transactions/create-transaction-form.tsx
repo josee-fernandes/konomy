@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Loader2, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
+import { getAccounts } from '@/api/accounts/get-accounts'
 import { createTransaction } from '@/api/transactions/create-transaction'
 import { DatePicker } from '@/components/date-picker'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useAuthStore } from '@/stores/auth'
 
 const createTransactionFormSchema = z.object({
 	description: z.string().min(1, 'Descrição é obrigatória'),
@@ -34,11 +36,13 @@ const createTransactionFormSchema = z.object({
 		type: z.enum(['credit-card', 'pix', 'bank-slip']),
 		name: z.string().min(1, 'Nome da origem é obrigatório'),
 	}),
+	accountId: z.string().min(1, 'ID da conta é obrigatório'),
 })
 
 type TCreateTransactionFormSchema = z.infer<typeof createTransactionFormSchema>
 
 export function CreateTransactionForm() {
+	const { user } = useAuthStore()
 	const queryClient = useQueryClient()
 
 	const { handleSubmit, control, formState, reset } = useForm<TCreateTransactionFormSchema>({
@@ -55,8 +59,14 @@ export function CreateTransactionForm() {
 				type: 'credit-card',
 				name: '',
 			},
+			accountId: '',
 		},
 		mode: 'onChange',
+	})
+
+	const { data: accountsData, isLoading: isLoadingAccounts } = useQuery({
+		queryKey: ['accounts'],
+		queryFn: () => getAccounts({ userId: user!.id, page: 1, limit: 20 }),
 	})
 
 	const { mutateAsync: createTransactionFn, isPending: isCreatingTransaction } = useMutation({
@@ -77,7 +87,8 @@ export function CreateTransactionForm() {
 	const [open, setOpen] = useState(false)
 
 	async function onSubmit(data: TCreateTransactionFormSchema) {
-		await createTransactionFn(data)
+		// TODO: add installments support
+		await createTransactionFn({ ...data, installments: { total: 1, current: 1, value: data.value } })
 	}
 
 	function onOpenChange(updatedOpen: boolean) {
@@ -108,6 +119,71 @@ export function CreateTransactionForm() {
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<div className="max-h-[70vh] overflow-y-auto -mx-4 px-4 pb-2 flex flex-col gap-8">
 						<FieldGroup>
+							<Controller
+								name="accountId"
+								control={control}
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel htmlFor="accountId">Conta</FieldLabel>
+										<Select value={field.value} onValueChange={field.onChange}>
+											<SelectTrigger id="accountId" className="w-full" aria-invalid={fieldState.invalid}>
+												<SelectValue placeholder="Selecione a conta" />
+											</SelectTrigger>
+											<SelectContent position="popper">
+												<SelectGroup>
+													{isLoadingAccounts && <Loader2 className="size-4 animate-spin" />}
+													{accountsData?.accounts?.map((account) => (
+														<SelectItem key={account.id} value={account.id}>
+															{account.name}
+														</SelectItem>
+													))}
+												</SelectGroup>
+											</SelectContent>
+										</Select>
+										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+									</Field>
+								)}
+							/>
+							<Controller
+								name="origin.name"
+								control={control}
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel htmlFor="origin-name">Origem</FieldLabel>
+										<Input
+											{...field}
+											id="origin-name"
+											aria-invalid={fieldState.invalid}
+											placeholder="Itaú, Nubank etc."
+											autoComplete="off"
+										/>
+										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+									</Field>
+								)}
+							/>
+							<Controller
+								name="origin.type"
+								control={control}
+								render={({ field, fieldState }) => (
+									<Field data-invalid={fieldState.invalid}>
+										<FieldLabel htmlFor="origin-type">Tipo de pagamento</FieldLabel>
+										<Select value={field.value} onValueChange={field.onChange}>
+											<SelectTrigger id="origin-type" className="w-full" aria-invalid={fieldState.invalid}>
+												<SelectValue placeholder="Selecione o tipo de origem" />
+											</SelectTrigger>
+											<SelectContent position="popper">
+												<SelectGroup>
+													<SelectItem value="credit-card">Cartão de crédito</SelectItem>
+													<SelectItem value="pix">PIX</SelectItem>
+													<SelectItem value="bank-slip">Boleto</SelectItem>
+												</SelectGroup>
+											</SelectContent>
+										</Select>
+										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+									</Field>
+								)}
+							/>
+							<FieldSeparator />
 							<Controller
 								name="description"
 								control={control}
@@ -217,46 +293,6 @@ export function CreateTransactionForm() {
 											placeholder="clothes"
 											autoComplete="off"
 										/>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</Field>
-								)}
-							/>
-							<FieldSeparator />
-							<Controller
-								name="origin.name"
-								control={control}
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="origin-name">Origem</FieldLabel>
-										<Input
-											{...field}
-											id="origin-name"
-											aria-invalid={fieldState.invalid}
-											placeholder="Itaú, Nubank etc."
-											autoComplete="off"
-										/>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</Field>
-								)}
-							/>
-							<Controller
-								name="origin.type"
-								control={control}
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="origin-type">Tipo de pagamento</FieldLabel>
-										<Select value={field.value} onValueChange={field.onChange}>
-											<SelectTrigger id="origin-type" className="w-full" aria-invalid={fieldState.invalid}>
-												<SelectValue placeholder="Selecione o tipo de origem" />
-											</SelectTrigger>
-											<SelectContent position="popper">
-												<SelectGroup>
-													<SelectItem value="credit-card">Cartão de crédito</SelectItem>
-													<SelectItem value="pix">PIX</SelectItem>
-													<SelectItem value="bank-slip">Boleto</SelectItem>
-												</SelectGroup>
-											</SelectContent>
-										</Select>
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 									</Field>
 								)}

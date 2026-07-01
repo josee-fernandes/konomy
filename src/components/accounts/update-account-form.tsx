@@ -124,7 +124,7 @@ export function UpdateAccountForm({ account }: IUpdateAccountFormProps) {
 								control={control}
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="balance">Saldo inicial</FieldLabel>
+										<FieldLabel htmlFor="balance">Saldo</FieldLabel>
 										<Input
 											{...field}
 											id="balance"

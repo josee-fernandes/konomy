@@ -30,6 +30,7 @@ export const db = new LSDB({
 				current: 'number',
 				value: 'number',
 			},
+			accountId: 'string',
 		},
 	},
 })

@@ -132,3 +132,7 @@
 body {
 	@apply h-screen w-full overflow-hidden;
 }
+
+@utility shiny-bg {
+	@apply bg-linear-210 from-background via-card via-35% to-background to-90%;
+}

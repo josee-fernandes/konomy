@@ -1,3 +1,5 @@
+import { Wallet } from 'lucide-react'
+
 import type { IAccount } from '@/@types/account'
 import { formatCurrency } from '@/utils/currency'
 
@@ -10,9 +12,12 @@ interface IAccountCardProps {
 
 export function AccountCard({ account }: IAccountCardProps) {
 	return (
-		<div key={account.id} className="group bg-card p-4 rounded-lg border">
+		<div key={account.id} className="group p-4 rounded-lg border shiny-bg">
 			<div className="flex items-center justify-between">
-				<p className="text-lg font-medium">{account.name}</p>
+				<div className="flex items-center gap-2">
+					<Wallet className="size-4" />
+					<p className="text-lg font-medium">{account.name}</p>
+				</div>
 				<div className="flex items-center gap-2">
 					<UpdateAccountForm account={account} />
 					<DeleteAccountConfirmation account={account} />

@@ -1,12 +1,13 @@
 import { db } from '@/lib/lsdb'
 
 interface IGetAccountsParams {
+	userId: string
 	page: number
 	limit?: number
 }
 
-export async function getAccounts({ page = 1, limit = 10 }: IGetAccountsParams) {
-	const accounts = await db.select({ from: 'accounts' })
+export async function getAccounts({ userId, page = 1, limit = 10 }: IGetAccountsParams) {
+	const accounts = await db.select({ from: 'accounts', where: { userId } })
 
 	const pagination = {
 		limit,
@@ -15,6 +16,7 @@ export async function getAccounts({ page = 1, limit = 10 }: IGetAccountsParams) 
 
 	const paginatedAccounts = await db.select({
 		from: 'accounts',
+		where: { userId },
 		orderBy: { field: 'createdAt', direction: 'desc' },
 		pagination,
 	})
