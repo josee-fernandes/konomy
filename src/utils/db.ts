@@ -1,4 +1,4 @@
-type TTables = 'users' | 'transactions'
+type TTables = 'users' | 'transactions' | 'accounts'
 
 interface ISelectParams {
 	from: TTables
@@ -39,7 +39,7 @@ export class LSDB {
 		return `${this.prefix}:${table}`
 	}
 
-	select({ from, where, id, orderBy, pagination }: ISelectParams) {
+	select({ from, where, id, orderBy = { field: 'createdAt', direction: 'desc' }, pagination }: ISelectParams) {
 		const data = JSON.parse(localStorage.getItem(this.getKey(from)) || '[]')
 
 		let result = data
@@ -94,7 +94,7 @@ export class LSDB {
 		const updatedData = existingData.map((item: any) => {
 			const match = Object.keys(where).every((k) => item[k] === where[k])
 
-			return match ? { ...item, ...data } : item
+			return match ? { ...item, ...data, updatedAt: new Date().toISOString() } : item
 		})
 
 		localStorage.setItem(this.getKey(from), JSON.stringify(updatedData))

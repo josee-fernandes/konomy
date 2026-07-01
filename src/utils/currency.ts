@@ -1,5 +1,7 @@
-export function formatCurrency(value: number) {
-	return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+import type { TAccountCurrency } from '@/@types/account'
+
+export function formatCurrency(value: number, currency: TAccountCurrency = 'BRL') {
+	return new Intl.NumberFormat('pt-BR', { style: 'currency', currency }).format(value)
 }
 
 export function calculatePerDayExpense(totalExpense: number) {

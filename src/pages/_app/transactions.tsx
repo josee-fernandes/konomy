@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2 } from 'lucide-react'
+import { BanknoteX, Loader2 } from 'lucide-react'
 import { z } from 'zod'
 
-import { getTransactions } from '@/api/get-transactions'
-import { CreateTransactionForm } from '@/components/create-transaction-form'
-import { TransactionCard } from '@/components/transaction-card'
-import { Button } from '@/components/ui/button'
+import { getTransactions } from '@/api/transactions/get-transactions'
+import { Pagination } from '@/components/pagination'
+import { CreateTransactionForm } from '@/components/transactions/create-transaction-form'
+import { TransactionCard } from '@/components/transactions/transaction-card'
 
 const transactionSearchSchema = z.object({
 	page: z
@@ -22,6 +22,12 @@ const transactionSearchSchema = z.object({
 export const Route = createFileRoute('/_app/transactions')({
 	component: TransactionsPage,
 	validateSearch: transactionSearchSchema,
+	head: () => ({
+		meta: [
+			{ title: 'Konomy | Transações' },
+			{ name: 'description', content: 'Página de transações do Konomy para gerenciar suas finanças' },
+		],
+	}),
 })
 
 function TransactionsPage() {
@@ -49,48 +55,25 @@ function TransactionsPage() {
 	}
 
 	return (
-		<div>
+		<div className="h-full flex flex-col gap-4">
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold">Transações</h2>
 				<div className="flex items-center gap-2">
 					<CreateTransactionForm />
 				</div>
 			</div>
-			<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+			<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
 				{transactions?.map((transaction) => (
 					<TransactionCard key={transaction.id} transaction={transaction} />
 				))}
+				{transactions.length === 0 && (
+					<div className="col-span-full border rounded-lg h-auto flex flex-col items-center justify-center gap-2">
+						<BanknoteX className="size-20 text-muted-foreground" />
+						<p className="text-center text-lg text-muted-foreground font-medium">Nenhuma transação encontrada</p>
+					</div>
+				)}
 			</div>
-			<div className="mt-4 flex items-center justify-between">
-				<p>
-					Página {meta.page} de {meta.totalPages}
-				</p>
-				<div className="flex items-center gap-2">
-					<Button variant="outline" size="icon" disabled={page === 1} onClick={() => handlePageChange(page - 1)}>
-						<ChevronsLeft className="size-4" />
-					</Button>
-					<Button variant="outline" size="icon" disabled={page === 1} onClick={() => handlePageChange(page - 1)}>
-						<ChevronLeft className="size-4" />
-					</Button>
-
-					<Button
-						variant="outline"
-						size="icon"
-						disabled={page === meta.totalPages}
-						onClick={() => handlePageChange(page + 1)}
-					>
-						<ChevronRight className="size-4" />
-					</Button>
-					<Button
-						variant="outline"
-						size="icon"
-						disabled={page === meta.totalPages}
-						onClick={() => handlePageChange(meta.totalPages)}
-					>
-						<ChevronsRight className="size-4" />
-					</Button>
-				</div>
-			</div>
+			<Pagination page={page} total={meta.total} perPage={meta.perPage} onPageChange={handlePageChange} />
 		</div>
 	)
 }

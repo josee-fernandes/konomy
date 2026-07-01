@@ -3,24 +3,27 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
 
 import { getSummary } from '@/api/get-summary'
-import { getTransactions } from '@/api/get-transactions'
-import { CreateTransactionForm } from '@/components/create-transaction-form'
+import { getTransactions } from '@/api/transactions/get-transactions'
 import { InfoCard } from '@/components/info-card'
-import { TransactionCard } from '@/components/transaction-card'
+import { CreateTransactionForm } from '@/components/transactions/create-transaction-form'
+import { TransactionCard } from '@/components/transactions/transaction-card'
 import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/stores/auth'
 import { calculatePerDayExpense, formatCurrency } from '@/utils/currency'
 
 export const Route = createFileRoute('/_app/dashboard')({
 	component: DashboardPage,
 	head: () => ({
 		meta: [
-			{ title: 'Konomy | Dashboard' },
-			{ name: 'description', content: 'Dashboard of Konomy to manage your finances' },
+			{ title: 'Konomy | Painel' },
+			{ name: 'description', content: 'Painel de controle do Konomy para gerenciar suas finanças' },
 		],
 	}),
 })
 
 function DashboardPage() {
+	const { user } = useAuthStore()
+
 	const { data: transactionsData, isLoading: isLoadingTransactions } = useQuery({
 		queryKey: ['transactions', { page: 1, limit: 4 }],
 		queryFn: () => getTransactions({ page: 1, limit: 4 }),
@@ -28,7 +31,7 @@ function DashboardPage() {
 
 	const { data: summary, isLoading: isLoadingSummary } = useQuery({
 		queryKey: ['summary'],
-		queryFn: () => getSummary(),
+		queryFn: () => getSummary({ userId: user!.id }),
 	})
 
 	if (isLoadingTransactions || isLoadingSummary) {
@@ -43,7 +46,7 @@ function DashboardPage() {
 	const { transactions } = transactionsData!
 
 	const { perDaySoFar, projectedTotal } = calculatePerDayExpense(
-		summary!.find((item) => item.category === 'current-expenses')?.value || 0,
+		summary!.find((item) => item.category === 'expenses')?.value || 0,
 	)
 
 	return (
@@ -52,7 +55,7 @@ function DashboardPage() {
 				<h2 className="text-2xl font-bold">Resumo</h2>
 				<div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
 					{summary?.map((item) => (
-						<InfoCard key={item.title} title={item.title} icon={item.icon} highlight={formatCurrency(item.value)} />
+						<InfoCard key={item.title} item={item} />
 					))}
 				</div>
 			</section>

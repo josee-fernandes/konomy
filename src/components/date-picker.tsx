@@ -10,21 +10,23 @@ import { cn } from '@/lib/utils'
 import { fromIsoDateString, toIsoDateString } from '@/utils/date'
 
 interface IDatePickerProps {
-	value?: string
-	onChange: (value: string) => void
 	id?: string
+	value?: string
 	placeholder?: string
 	className?: string
 	'aria-invalid'?: boolean
+	disabled?: boolean
+	onChange: (value: string) => void
 }
 
 export function DatePicker({
-	value,
-	onChange,
 	id,
+	value,
 	placeholder = 'Selecione uma data',
 	className,
 	'aria-invalid': ariaInvalid,
+	disabled = false,
+	onChange,
 }: IDatePickerProps) {
 	const [open, setOpen] = useState(false)
 	const date = value ? fromIsoDateString(value) : undefined
@@ -49,6 +51,7 @@ export function DatePicker({
 						'w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground',
 						className,
 					)}
+					disabled={disabled}
 				>
 					{date ? format(date, 'PPP', { locale: ptBR }) : <span>{placeholder}</span>}
 					<ChevronDownIcon className="size-4" />

@@ -15,7 +15,9 @@ import { Route as IndexRouteImport } from './pages/index'
 import { Route as AuthSignUpRouteImport } from './pages/_auth/sign-up'
 import { Route as AuthSignInRouteImport } from './pages/_auth/sign-in'
 import { Route as AppTransactionsRouteImport } from './pages/_app/transactions'
+import { Route as AppIncomeSourcesRouteImport } from './pages/_app/income-sources'
 import { Route as AppDashboardRouteImport } from './pages/_app/dashboard'
+import { Route as AppAccountsRouteImport } from './pages/_app/accounts'
 
 const AuthLayoutRoute = AuthLayoutRouteImport.update({
   id: '/_auth',
@@ -45,22 +47,36 @@ const AppTransactionsRoute = AppTransactionsRouteImport.update({
   path: '/transactions',
   getParentRoute: () => AppLayoutRoute,
 } as any)
+const AppIncomeSourcesRoute = AppIncomeSourcesRouteImport.update({
+  id: '/income-sources',
+  path: '/income-sources',
+  getParentRoute: () => AppLayoutRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AppLayoutRoute,
 } as any)
+const AppAccountsRoute = AppAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => AppLayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accounts': typeof AppAccountsRoute
   '/dashboard': typeof AppDashboardRoute
+  '/income-sources': typeof AppIncomeSourcesRoute
   '/transactions': typeof AppTransactionsRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accounts': typeof AppAccountsRoute
   '/dashboard': typeof AppDashboardRoute
+  '/income-sources': typeof AppIncomeSourcesRoute
   '/transactions': typeof AppTransactionsRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
@@ -70,22 +86,40 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppLayoutRouteWithChildren
   '/_auth': typeof AuthLayoutRouteWithChildren
+  '/_app/accounts': typeof AppAccountsRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/income-sources': typeof AppIncomeSourcesRoute
   '/_app/transactions': typeof AppTransactionsRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/transactions' | '/sign-in' | '/sign-up'
+  fullPaths:
+    | '/'
+    | '/accounts'
+    | '/dashboard'
+    | '/income-sources'
+    | '/transactions'
+    | '/sign-in'
+    | '/sign-up'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/transactions' | '/sign-in' | '/sign-up'
+  to:
+    | '/'
+    | '/accounts'
+    | '/dashboard'
+    | '/income-sources'
+    | '/transactions'
+    | '/sign-in'
+    | '/sign-up'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/_auth'
+    | '/_app/accounts'
     | '/_app/dashboard'
+    | '/_app/income-sources'
     | '/_app/transactions'
     | '/_auth/sign-in'
     | '/_auth/sign-up'
@@ -141,6 +175,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTransactionsRouteImport
       parentRoute: typeof AppLayoutRoute
     }
+    '/_app/income-sources': {
+      id: '/_app/income-sources'
+      path: '/income-sources'
+      fullPath: '/income-sources'
+      preLoaderRoute: typeof AppIncomeSourcesRouteImport
+      parentRoute: typeof AppLayoutRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -148,16 +189,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppLayoutRoute
     }
+    '/_app/accounts': {
+      id: '/_app/accounts'
+      path: '/accounts'
+      fullPath: '/accounts'
+      preLoaderRoute: typeof AppAccountsRouteImport
+      parentRoute: typeof AppLayoutRoute
+    }
   }
 }
 
 interface AppLayoutRouteChildren {
+  AppAccountsRoute: typeof AppAccountsRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppIncomeSourcesRoute: typeof AppIncomeSourcesRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
 }
 
 const AppLayoutRouteChildren: AppLayoutRouteChildren = {
+  AppAccountsRoute: AppAccountsRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppIncomeSourcesRoute: AppIncomeSourcesRoute,
   AppTransactionsRoute: AppTransactionsRoute,
 }
 

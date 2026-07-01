@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link, Navigate, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,7 @@ export const Route = createFileRoute('/_app')({
 })
 
 function AppLayout() {
+	const queryClient = useQueryClient()
 	const navigate = useNavigate()
 	const { isAuthenticated, clearMemoryUser } = useAuthStore()
 	const { location } = useRouterState()
@@ -17,6 +19,7 @@ function AppLayout() {
 	}
 
 	function handleSignOut() {
+		queryClient.invalidateQueries()
 		clearMemoryUser()
 		navigate({ to: '/sign-in' })
 	}
@@ -34,13 +37,19 @@ function AppLayout() {
 					<Button asChild variant={location.pathname === '/transactions' ? 'default' : 'ghost'}>
 						<Link to="/transactions">Transações</Link>
 					</Button>
+					<Button asChild variant={location.pathname === '/accounts' ? 'default' : 'ghost'}>
+						<Link to="/accounts">Contas</Link>
+					</Button>
+					<Button asChild variant={location.pathname === '/income-sources' ? 'default' : 'ghost'}>
+						<Link to="/income-sources">Fontes de renda</Link>
+					</Button>
 					<Button variant="destructive" onClick={handleSignOut}>
 						Sair
 					</Button>
 				</div>
 			</nav>
 			<div className="flex-1 h-full p-10 overflow-y-auto">
-				<div className="max-w-[1200px] mx-auto">
+				<div className="max-w-[1200px] mx-auto h-full">
 					<Outlet />
 				</div>
 			</div>

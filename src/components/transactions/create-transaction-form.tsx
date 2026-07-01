@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Pencil } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import type { ITransaction } from '@/@types/transaction'
-import { updateTransaction } from '@/api/update-transaction'
+import { createTransaction } from '@/api/transactions/create-transaction'
 import { DatePicker } from '@/components/date-picker'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,8 +22,7 @@ import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/com
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const updateTransactionFormSchema = z.object({
-	id: z.string().min(1, 'ID é obrigatório'),
+const createTransactionFormSchema = z.object({
 	description: z.string().min(1, 'Descrição é obrigatória'),
 	value: z.number().min(1, 'Valor é obrigatório'),
 	date: z.string(),
@@ -37,53 +36,74 @@ const updateTransactionFormSchema = z.object({
 	}),
 })
 
-type TUpdateTransactionFormSchema = z.infer<typeof updateTransactionFormSchema>
+type TCreateTransactionFormSchema = z.infer<typeof createTransactionFormSchema>
 
-interface IUpdateTransactionFormProps {
-	transaction: ITransaction
-}
+export function CreateTransactionForm() {
+	const queryClient = useQueryClient()
 
-export function UpdateTransactionForm({ transaction }: IUpdateTransactionFormProps) {
-	const { handleSubmit, control, formState } = useForm<TUpdateTransactionFormSchema>({
-		resolver: zodResolver(updateTransactionFormSchema),
+	const { handleSubmit, control, formState, reset } = useForm<TCreateTransactionFormSchema>({
+		resolver: zodResolver(createTransactionFormSchema),
 		defaultValues: {
-			id: transaction.id,
-			description: transaction.description,
-			value: transaction.value,
-			date: transaction.date,
-			type: transaction.type,
-			category: transaction.category,
-			subcategory: transaction.subcategory,
-			origin: transaction.origin,
+			description: '',
+			value: 0,
+			date: new Date().toISOString(),
+			type: 'income',
+			category: '',
+			subcategory: '',
+			origin: {
+				id: crypto.randomUUID(),
+				type: 'credit-card',
+				name: '',
+			},
 		},
 		mode: 'onChange',
 	})
 
+	const { mutateAsync: createTransactionFn, isPending: isCreatingTransaction } = useMutation({
+		mutationFn: createTransaction,
+		onSuccess: () => {
+			toast.success('Lançamento criado com sucesso')
+			queryClient.invalidateQueries({ queryKey: ['transactions'] })
+			queryClient.invalidateQueries({ queryKey: ['summary'] })
+			reset()
+			setOpen(false)
+		},
+		onError: (error) => {
+			console.error(error)
+			toast.error('Erro ao criar lançamento')
+		},
+	})
+
 	const [open, setOpen] = useState(false)
 
-	async function onSubmit(data: TUpdateTransactionFormSchema) {
-		try {
-			await updateTransaction(data)
+	async function onSubmit(data: TCreateTransactionFormSchema) {
+		await createTransactionFn(data)
+	}
 
-			toast.success('Lançamento atualizado com sucesso')
-
-			setOpen(false)
-		} catch (error) {
-			toast.error('Erro ao atualizar lançamento')
+	function onOpenChange(updatedOpen: boolean) {
+		if (!updatedOpen) {
+			reset()
 		}
+
+		setOpen(updatedOpen)
+	}
+
+	function handleClose() {
+		onOpenChange(false)
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogTrigger asChild>
-				<Button variant="outline" size="icon-sm" className="group-hover:opacity-100 opacity-0">
-					<Pencil className="size-4" />
+				<Button variant="outline">
+					<Plus className="size-4" />
+					Adicionar transação
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="max-w-lg!">
 				<DialogHeader>
-					<DialogTitle>Atualizar lançamento</DialogTitle>
-					<DialogDescription>Atualize um lançamento existente</DialogDescription>
+					<DialogTitle>Novo lançamento</DialogTitle>
+					<DialogDescription>Crie um novo lançamento para sua conta</DialogDescription>
 				</DialogHeader>
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<div className="max-h-[70vh] overflow-y-auto -mx-4 px-4 pb-2 flex flex-col gap-8">
@@ -138,8 +158,9 @@ export function UpdateTransactionForm({ transaction }: IUpdateTransactionFormPro
 										<DatePicker
 											id="date"
 											value={field.value}
-											onChange={field.onChange}
 											aria-invalid={fieldState.invalid}
+											disabled={isCreatingTransaction}
+											onChange={field.onChange}
 										/>
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 									</Field>
@@ -243,10 +264,10 @@ export function UpdateTransactionForm({ transaction }: IUpdateTransactionFormPro
 						</FieldGroup>
 					</div>
 					<DialogFooter>
-						<Button type="button" variant="outline" onClick={() => setOpen(false)}>
+						<Button type="button" variant="outline" disabled={isCreatingTransaction} onClick={handleClose}>
 							Cancelar
 						</Button>
-						<Button type="submit" disabled={!formState.isValid}>
+						<Button type="submit" disabled={!formState.isValid || isCreatingTransaction}>
 							Confirmar
 						</Button>
 					</DialogFooter>

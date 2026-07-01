@@ -1,11 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { signUp } from '@/api/sign-up'
+import { signUp } from '@/api/auth/sign-up'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -51,14 +53,23 @@ function SignUpPage() {
 		mode: 'onChange',
 	})
 
+	const { mutateAsync: signUpFn, isPending: isSigningUp } = useMutation({
+		mutationFn: signUp,
+		onSuccess: (user) => {
+			setMemoryUser(user)
+			navigate({ to: '/dashboard' })
+		},
+		onError: (error) => {
+			console.error(error)
+			toast.error('Erro ao criar conta')
+		},
+	})
+
 	const [showPassword, setShowPassword] = useState(false)
 	const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false)
 
 	async function onSubmit(data: TSignUpFormSchema) {
-		const user = await signUp(data)
-
-		setMemoryUser(user)
-		navigate({ to: '/dashboard' })
+		await signUpFn(data)
 	}
 
 	function handleToggleShowPassword() {
@@ -89,6 +100,7 @@ function SignUpPage() {
 									aria-invalid={fieldState.invalid}
 									placeholder="John Doe"
 									autoComplete="off"
+									disabled={isSigningUp}
 								/>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</Field>
@@ -106,6 +118,7 @@ function SignUpPage() {
 									aria-invalid={fieldState.invalid}
 									placeholder="john.doe@example.com"
 									autoComplete="off"
+									disabled={isSigningUp}
 								/>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</Field>
@@ -125,8 +138,9 @@ function SignUpPage() {
 										aria-invalid={fieldState.invalid}
 										placeholder="••••••••"
 										autoComplete="off"
+										disabled={isSigningUp}
 									/>
-									<InputGroupButton onClick={handleToggleShowPassword}>
+									<InputGroupButton disabled={isSigningUp} onClick={handleToggleShowPassword}>
 										{showPassword ? <EyeOff name="eye-off" /> : <Eye name="eye" />}
 									</InputGroupButton>
 								</InputGroup>
@@ -148,8 +162,9 @@ function SignUpPage() {
 										aria-invalid={fieldState.invalid}
 										placeholder="••••••••"
 										autoComplete="off"
+										disabled={isSigningUp}
 									/>
-									<InputGroupButton onClick={handleToggleShowPasswordConfirmation}>
+									<InputGroupButton disabled={isSigningUp} onClick={handleToggleShowPasswordConfirmation}>
 										{showPasswordConfirmation ? <EyeOff name="eye-off" /> : <Eye name="eye" />}
 									</InputGroupButton>
 								</InputGroup>
@@ -158,8 +173,8 @@ function SignUpPage() {
 						)}
 					/>
 				</FieldGroup>
-				<Button type="submit" className="w-full" disabled={!formState.isValid}>
-					Criar conta
+				<Button type="submit" className="w-full" disabled={!formState.isValid || isSigningUp}>
+					{isSigningUp ? <Loader2 className="size-4 animate-spin" /> : 'Criar conta'}
 				</Button>
 			</form>
 			<div className="text-center">

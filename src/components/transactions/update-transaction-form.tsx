@@ -1,11 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Pencil } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { createTransaction } from '@/api/create-transaction'
+import type { ITransaction } from '@/@types/transaction'
+import { updateTransaction } from '@/api/transactions/update-transaction'
 import { DatePicker } from '@/components/date-picker'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,7 +23,8 @@ import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/com
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const createTransactionFormSchema = z.object({
+const updateTransactionFormSchema = z.object({
+	id: z.string().min(1, 'ID é obrigatório'),
 	description: z.string().min(1, 'Descrição é obrigatória'),
 	value: z.number().min(1, 'Valor é obrigatório'),
 	date: z.string(),
@@ -35,52 +38,74 @@ const createTransactionFormSchema = z.object({
 	}),
 })
 
-type TCreateTransactionFormSchema = z.infer<typeof createTransactionFormSchema>
+type TUpdateTransactionFormSchema = z.infer<typeof updateTransactionFormSchema>
 
-export function CreateTransactionForm() {
-	const { handleSubmit, control, formState } = useForm<TCreateTransactionFormSchema>({
-		resolver: zodResolver(createTransactionFormSchema),
+interface IUpdateTransactionFormProps {
+	transaction: ITransaction
+}
+
+export function UpdateTransactionForm({ transaction }: IUpdateTransactionFormProps) {
+	const queryClient = useQueryClient()
+
+	const { handleSubmit, control, formState, reset } = useForm<TUpdateTransactionFormSchema>({
+		resolver: zodResolver(updateTransactionFormSchema),
 		defaultValues: {
-			description: '',
-			value: 0,
-			date: new Date().toISOString(),
-			type: 'income',
-			category: '',
-			subcategory: '',
-			origin: {
-				id: crypto.randomUUID(),
-				type: 'credit-card',
-				name: '',
-			},
+			id: transaction.id,
+			description: transaction.description,
+			value: transaction.value,
+			date: transaction.date,
+			type: transaction.type,
+			category: transaction.category,
+			subcategory: transaction.subcategory,
+			origin: transaction.origin,
 		},
 		mode: 'onChange',
 	})
 
+	const { mutateAsync: updateTransactionFn, isPending: isUpdatingTransaction } = useMutation({
+		mutationFn: updateTransaction,
+		onSuccess: () => {
+			toast.success('Lançamento atualizado com sucesso')
+			queryClient.invalidateQueries({ queryKey: ['transactions'] })
+			queryClient.invalidateQueries({ queryKey: ['summary'] })
+			reset()
+			setOpen(false)
+		},
+		onError: (error) => {
+			console.error(error)
+			toast.error('Erro ao atualizar lançamento')
+		},
+	})
+
 	const [open, setOpen] = useState(false)
 
-	async function onSubmit(data: TCreateTransactionFormSchema) {
-		try {
-			await createTransaction(data)
+	async function onSubmit(data: TUpdateTransactionFormSchema) {
+		await updateTransactionFn(data)
+	}
 
-			toast.success('Lançamento criado com sucesso')
-
-			setOpen(false)
-		} catch (error) {
-			console.error(error)
+	function onOpenChange(updatedOpen: boolean) {
+		if (!updatedOpen) {
+			reset()
 		}
+
+		setOpen(updatedOpen)
+	}
+
+	function handleClose() {
+		onOpenChange(false)
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogTrigger asChild>
-				<Button size="icon">
-					<Plus className="size-4" />
+				<Button variant="outline" size="icon-sm" className="group-hover:opacity-100 opacity-0">
+					<Pencil className="size-4" />
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="max-w-lg!">
 				<DialogHeader>
-					<DialogTitle>Novo lançamento</DialogTitle>
-					<DialogDescription>Crie um novo lançamento para sua conta</DialogDescription>
+					<DialogTitle>Atualizar lançamento</DialogTitle>
+					<DialogDescription>Atualize um lançamento existente</DialogDescription>
 				</DialogHeader>
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<div className="max-h-[70vh] overflow-y-auto -mx-4 px-4 pb-2 flex flex-col gap-8">
@@ -97,6 +122,7 @@ export function CreateTransactionForm() {
 											aria-invalid={fieldState.invalid}
 											placeholder="Compra de roupas"
 											autoComplete="off"
+											disabled={isUpdatingTransaction}
 										/>
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 									</Field>
@@ -117,6 +143,7 @@ export function CreateTransactionForm() {
 											aria-invalid={fieldState.invalid}
 											placeholder="0,00"
 											autoComplete="off"
+											disabled={isUpdatingTransaction}
 											onChange={(event) => {
 												const value = event.target.valueAsNumber
 												field.onChange(Number.isNaN(value) ? 0 : value)
@@ -135,8 +162,9 @@ export function CreateTransactionForm() {
 										<DatePicker
 											id="date"
 											value={field.value}
-											onChange={field.onChange}
 											aria-invalid={fieldState.invalid}
+											disabled={isUpdatingTransaction}
+											onChange={field.onChange}
 										/>
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 									</Field>
@@ -148,7 +176,7 @@ export function CreateTransactionForm() {
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
 										<FieldLabel htmlFor="type">Tipo</FieldLabel>
-										<Select value={field.value} onValueChange={field.onChange}>
+										<Select value={field.value} disabled={isUpdatingTransaction} onValueChange={field.onChange}>
 											<SelectTrigger id="type" className="w-full" aria-invalid={fieldState.invalid}>
 												<SelectValue placeholder="Selecione o tipo" />
 											</SelectTrigger>
@@ -175,6 +203,7 @@ export function CreateTransactionForm() {
 											aria-invalid={fieldState.invalid}
 											placeholder="clothing"
 											autoComplete="off"
+											disabled={isUpdatingTransaction}
 										/>
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 									</Field>
@@ -192,6 +221,7 @@ export function CreateTransactionForm() {
 											aria-invalid={fieldState.invalid}
 											placeholder="clothes"
 											autoComplete="off"
+											disabled={isUpdatingTransaction}
 										/>
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 									</Field>
@@ -210,6 +240,7 @@ export function CreateTransactionForm() {
 											aria-invalid={fieldState.invalid}
 											placeholder="Itaú, Nubank etc."
 											autoComplete="off"
+											disabled={isUpdatingTransaction}
 										/>
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 									</Field>
@@ -221,7 +252,7 @@ export function CreateTransactionForm() {
 								render={({ field, fieldState }) => (
 									<Field data-invalid={fieldState.invalid}>
 										<FieldLabel htmlFor="origin-type">Tipo de pagamento</FieldLabel>
-										<Select value={field.value} onValueChange={field.onChange}>
+										<Select value={field.value} disabled={isUpdatingTransaction} onValueChange={field.onChange}>
 											<SelectTrigger id="origin-type" className="w-full" aria-invalid={fieldState.invalid}>
 												<SelectValue placeholder="Selecione o tipo de origem" />
 											</SelectTrigger>
@@ -240,10 +271,10 @@ export function CreateTransactionForm() {
 						</FieldGroup>
 					</div>
 					<DialogFooter>
-						<Button type="button" variant="outline" onClick={() => setOpen(false)}>
+						<Button type="button" variant="outline" disabled={isUpdatingTransaction} onClick={handleClose}>
 							Cancelar
 						</Button>
-						<Button type="submit" disabled={!formState.isValid}>
+						<Button type="submit" disabled={!formState.isValid || isUpdatingTransaction}>
 							Confirmar
 						</Button>
 					</DialogFooter>
