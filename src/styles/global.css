@@ -134,5 +134,5 @@ body {
 }
 
 @utility shiny-bg {
-	@apply bg-linear-210 from-background via-card via-35% to-background to-90%;
+	@apply bg-linear-210 from-background via-zinc-50 dark:via-card via-35% to-background to-90%;
 }

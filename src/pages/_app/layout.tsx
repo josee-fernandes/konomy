@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link, Navigate, Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 
+import { ThemeToggler } from '@/components/theme-toggler'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
 
@@ -43,6 +44,10 @@ function AppLayout() {
 					<Button asChild variant={location.pathname === '/income-sources' ? 'default' : 'ghost'}>
 						<Link to="/income-sources">Fontes de renda</Link>
 					</Button>
+				</div>
+				<div className="flex items-center gap-2">
+					<ThemeToggler />
+
 					<Button variant="destructive" onClick={handleSignOut}>
 						Sair
 					</Button>
