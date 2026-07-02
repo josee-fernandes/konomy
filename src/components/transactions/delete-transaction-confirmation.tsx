@@ -20,6 +20,7 @@ export function DeleteTransactionConfirmation({ transaction }: IDeleteTransactio
 			toast.success('Transação deletada com sucesso')
 			queryClient.invalidateQueries({ queryKey: ['transactions'] })
 			queryClient.invalidateQueries({ queryKey: ['summary'] })
+			queryClient.invalidateQueries({ queryKey: ['accounts'] })
 			setOpen(false)
 		},
 	})

@@ -75,6 +75,7 @@ export function CreateTransactionForm() {
 			toast.success('Lançamento criado com sucesso')
 			queryClient.invalidateQueries({ queryKey: ['transactions'] })
 			queryClient.invalidateQueries({ queryKey: ['summary'] })
+			queryClient.invalidateQueries({ queryKey: ['accounts'] })
 			reset()
 			setOpen(false)
 		},
